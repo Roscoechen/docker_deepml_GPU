@@ -5,7 +5,7 @@
 # docker run --rm -p 8888:8888 -p 6006:6006 --name deepml-cpu -it guitarmind/deepml-cpu bash
 # 
 
-FROM gpuci/miniconda-cuda:11.2-devel-ubuntu20.04
+FROM anibali/pytorch:1.8.1-cuda11.1-ubuntu20.04
 
 LABEL MAINTAINER="Roscoe Chen"
 
@@ -21,31 +21,23 @@ EXPOSE 8888 6006 8090
 WORKDIR /workspace
 #COPY ./run_tests.sh /workspace/
 
+RUN sudo apt-get update \
+ && sydi apt-get update --fix-missing \
+ && sudo apt-get install -y libgl1-mesa-glx libgtk2.0-0 libsm6 libxext6
+ 
+# Install OpenCV from PyPI.
+RUN pip install opencv-python==4.5.1.48
+
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="pip --no-cache-dir install --upgrade --default-timeout=100" && \
     GIT_CLONE="git clone --depth 10" && \
 #    chmod a+x /workspace/run_tests.sh && \
 
 # ==================================================================
-# System Packages & Tools
-# ------------------------------------------------------------------
-
-    apt-get update --fix-missing && \
-    apt-get install -y \
-        nginx \
-        nodejs \
-        npm \
-#        libopencv-highgui3.2 \
-#        gcc \
-#        procps \
-        binutils && \
-    apt-get clean && \
-
-# ==================================================================
 # Essesntial Packages
 # ------------------------------------------------------------------
 
-    conda install -y \
+    pip install \
         psutil \
         Cython \
         numpy \
@@ -53,52 +45,16 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         pandas \
         scikit-learn \
         matplotlib \
-        seaborn 
+        seaborn && \
 
-#RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-#    PIP_INSTALL="pip --no-cache-dir install --upgrade --default-timeout=100" && \
-#    GIT_CLONE="git clone --depth 10" && \
+    pip install tensorflow && \ 
 
-# ==================================================================
-# Tensorflow
-# ------------------------------------------------------------------
-
-#    conda install -y \
-#        tensorflow==2.5.0 
-# ==================================================================
-# PyTorch
-# ------------------------------------------------------------------
-
-RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-    PIP_INSTALL="pip --no-cache-dir install --upgrade --default-timeout=100" && \
-    GIT_CLONE="git clone --depth 10" && \
-
-    conda install -y \
-        pytorch==1.8.0 \
-        torchvision torchaudio cpuonly -c pytorch && \
-    conda install -c conda-forge -y \
-        pytorch-lightning
-
-#    $PIP_INSTALL \
-#        torch_optimizer \
-#        # PyTorch Geometric
-#        # https://pytorch-geometric.com/whl/
-#        torch-scatter -f https://pytorch-geometric.com/whl/torch-1.7.0+cpu.html \
-#        torch-sparse -f https://pytorch-geometric.com/whl/torch-1.7.0+cpu.html \
-#        torch-cluster -f https://pytorch-geometric.com/whl/torch-1.7.0+cpu.html \
-#        torch-spline-conv -f https://pytorch-geometric.com/whl/torch-1.7.0+cpu.html \
-#        torch-geometric \
-#        && \
 
 # ==================================================================
 # Additional Packages
 # ------------------------------------------------------------------
 
-RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-    PIP_INSTALL="pip --no-cache-dir install --upgrade --default-timeout=100" && \
-    GIT_CLONE="git clone --depth 10" && \
-
-    conda install -c conda-forge -y \
+    pip install \
         gensim \
         transformers \
         optuna \
@@ -121,7 +77,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
 
     # LightGBM, Xgboost
-    conda install -c conda-forge -y \
+    pip intall \
         lightgbm xgboost \
         && \
 
@@ -141,44 +97,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     jupyter contrib nbextension install --user && \
     jupyter nbextension enable code_prettify/code_prettify && \
     jupyter nbextension enable collapsible_headings/main && \
-    jupyter nbextension enable toggle_all_line_numbers/main
-
-# ==================================================================
-# OpenCV
-# ------------------------------------------------------------------
-
-#    apt-get install -y \
-#        build-essential \
-#        cmake && \
-#    ln -s /opt/conda/lib/python3.8/site-packages/numpy/core/include/numpy /usr/include/numpy && \
-#    $GIT_CLONE --branch 4.4.0 https://github.com/opencv/opencv ~/opencv && \
-#    mkdir -p ~/opencv/build && cd ~/opencv/build && \
-#    cmake -D CMAKE_BUILD_TYPE=RELEASE \
-#          -D CMAKE_INSTALL_PREFIX=/opt/conda \
-#          -D WITH_IPP=OFF \
-#          -D WITH_CUDA=OFF \
-#          -D WITH_OPENCL=OFF \
-#          -D BUILD_TESTS=OFF \
-#          -D BUILD_PERF_TESTS=OFF \
-#          -D BUILD_opencv_python3=ON \
-#          -D PYTHON_DEFAULT_EXECUTABLE=/opt/conda/bin/python \
-#          -D PYTHON3_NUMPY_INCLUDE_DIRS=/opt/conda/lib/python3.8/site-packages/numpy/core/include \
-#          -D PYTHON3_LIBRARIES=/opt/conda/lib/libpython3.8.so \
-#          -D PYTHON3_INCLUDE_DIR=/opt/conda/include/python3.8 \
-#          -D PYTHON3_EXECUTABLE=/opt/conda/bin/python \
-#          -D PYTHON3_PACKAGES_PATH=/opt/conda/lib/python3.8/site-packages \
-#          .. && \
-#    make -j"$(nproc)" install && \
-#    python -c "import cv2; print(cv2.__version__)" && \
-#    apt-get remove -y build-essential cmake && \
+    jupyter nbextension enable toggle_all_line_numbers/main && \
 
 # ==================================================================
 # Config & Cleanup
 # https://jcristharif.com/conda-docker-tips.html
 # ------------------------------------------------------------------
-RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
-    PIP_INSTALL="pip --no-cache-dir install --upgrade --default-timeout=100" && \
-    GIT_CLONE="git clone --depth 10" && \
 
     ldconfig && \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
