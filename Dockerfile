@@ -16,19 +16,21 @@ ENV LANG=C.UTF-8 LC_ALL=C.UTF-8 \
     PYTHONDONTWRITEBYTECODE=true \
     TZ=Asia/Taipei
 
+RUN sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime
+
 EXPOSE 8888 6006 8090
 
 WORKDIR /workspace
 #COPY ./run_tests.sh /workspace/
 
 RUN sudo apt-get update \
- && sydi apt-get update --fix-missing \
- && sudo apt-get install -y libgl1-mesa-glx libgtk2.0-0 libsm6 libxext6
+ #&& sudo apt-get update --fix-missing \
+ && sudo apt-get install -y gcc build-essential libgl1-mesa-glx libgtk2.0-0 libsm6 libxext6
  
 # Install OpenCV from PyPI.
 RUN pip install opencv-python==4.5.1.48
 
-RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
+RUN APT_INSTALL="sudo apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="pip --no-cache-dir install --upgrade --default-timeout=100" && \
     GIT_CLONE="git clone --depth 10" && \
 #    chmod a+x /workspace/run_tests.sh && \
@@ -69,7 +71,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 
     $PIP_INSTALL \
         # NLP
-        zhconv \
+    #    zhconv \
         jieba \
         ckiptagger \
         spacy \
@@ -77,7 +79,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
 
     # LightGBM, Xgboost
-    pip intall \
+    pip install \
         lightgbm xgboost \
         && \
 
@@ -104,18 +106,18 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
 # https://jcristharif.com/conda-docker-tips.html
 # ------------------------------------------------------------------
 
-    ldconfig && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
+    #sudo ldconfig && \
+    #sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
 
-    find /opt/conda/ -follow -type f -name '*.a' -delete && \
-    find /opt/conda/ -follow -type f -name '*.pyc' -delete && \
-    find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
-    find /opt/conda/lib/python3.*/ -name 'tests' -exec rm -r '{}' + && \
-    find /opt/conda/lib/python3.*/site-packages/ -name '*.so' -print -exec sh -c 'file "{}" | grep -q "not stripped" && strip -s "{}"' \; && \
+    #find /opt/conda/ -follow -type f -name '*.a' -delete && \
+    #find /opt/conda/ -follow -type f -name '*.pyc' -delete && \
+    #find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
+    #find /opt/conda/lib/python3.*/ -name 'tests' -exec rm -r '{}' + && \
+    #find /opt/conda/lib/python3.*/site-packages/ -name '*.so' -print -exec sh -c 'file "{}" | grep -q "not stripped" && strip -s "{}"' \; && \
 
-    apt-get remove -y binutils && \
-    apt-get clean -y && \
-    apt-get autoremove -y && \
-    conda clean --all -y && \
-    rm -rf /tmp/* && \
-    rm -rf /var/cache/apk/*
+    sudo apt-get remove -y binutils && \
+    sudo apt-get clean -y && \
+    sudo apt-get autoremove -y && \
+    #conda clean --all -y && \
+    sudo rm -rf /tmp/* && \
+    sudo rm -rf /var/cache/apk/*
